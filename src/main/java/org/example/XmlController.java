@@ -35,6 +35,7 @@ public class XmlController {
 
     private static final String NAME_OF_URL = "https://www.tcmb.gov.tr/kurlar/today.xml";
 
+
     private Document doc;
 
     public void connectURL() throws IOException {
@@ -103,6 +104,7 @@ public class XmlController {
                 } else {
                     double forexSelling = Double.parseDouble(eElement.getElementsByTagName("ForexSelling").item(0).getTextContent());
                     Forex forex = new Forex(itr, new Date(), currencyCode, unit, forexBuying, forexSelling);
+                    createXmlAttributeForex(elements, forex);
                     entityManager.persist(forex);
                     System.out.println(forex);
 
@@ -110,6 +112,7 @@ public class XmlController {
                         double crossRateOther = Double.parseDouble(eElement.getElementsByTagName("CrossRateUSD").item(0).getTextContent());
 
                         CrossRates crossRates = new CrossRates(itr, new Date(), currencyCode, unit, crossRateOther);
+                        createXmlAttributeCross(elements, crossRates);
                         entityManager.persist(crossRates);
                         System.out.println(crossRates);
 
@@ -122,6 +125,7 @@ public class XmlController {
 
                     if (eElement.getElementsByTagName("BanknoteBuying").item(0).getTextContent().equals("") || eElement.getElementsByTagName("BanknoteSelling").item(0).getTextContent().equals("")) {
                         Banknote banknote = new Banknote(itr, new Date(), currencyCode, unit);
+                        createXmlAttributeBanknote(elements, banknote);
                         entityManager.persist(banknote);
                         System.out.println(banknote);
 
@@ -129,6 +133,7 @@ public class XmlController {
                         double banknoteBuying = Double.parseDouble(eElement.getElementsByTagName("BanknoteBuying").item(0).getTextContent());
                         double banknoteSelling = Double.parseDouble(eElement.getElementsByTagName("BanknoteSelling").item(0).getTextContent());
                         Banknote banknote = new Banknote(itr, new Date(), currencyCode, unit, banknoteBuying, banknoteSelling);
+                        createXmlAttributeBanknote(elements, banknote);
                         entityManager.persist(banknote);
                         System.out.println(banknote);
                     }
@@ -139,6 +144,8 @@ public class XmlController {
 
         createXmlFile();
     }
+
+
 
     private void createXmlFile() {
 
@@ -165,6 +172,66 @@ public class XmlController {
         return f.format(new Date());
     }
 
+
+
+    private void createXmlAttributeForex(List<Element> elements, Forex forex){
+        Element currency = doc.createElement("Currency");
+        Attr attrPair = doc.createAttribute("Pair");
+        attrPair.setValue(forex.getCurrencyCode() + "/USD");
+        currency.setAttributeNode(attrPair);
+
+        Attr attrUnit = doc.createAttribute("Unit");
+        attrUnit.setValue(String.valueOf(forex.getUnit()));
+        currency.setAttributeNode(attrUnit);
+
+        Attr attrBuy = doc.createAttribute("Buy");
+        attrBuy.setValue(String.valueOf(forex.getForexBuying()));
+        currency.setAttributeNode(attrBuy);
+
+        Attr attrSell = doc.createAttribute("Sell");
+        attrSell.setValue(String.valueOf(forex.getForexSelling()));
+        currency.setAttributeNode(attrSell);
+
+        elements.get(0).appendChild(currency);
+    }
+
+    private void createXmlAttributeBanknote(List<Element> elements, Banknote banknote) {
+        Element currency = doc.createElement("Currency");
+        Attr attrPair = doc.createAttribute("Pair");
+        attrPair.setValue(banknote.getCurrencyCode() + "/TRY");
+        currency.setAttributeNode(attrPair);
+
+        Attr attrUnit = doc.createAttribute("Unit");
+        attrUnit.setValue(String.valueOf(banknote.getUnit()));
+        currency.setAttributeNode(attrUnit);
+
+        Attr attrBuy = doc.createAttribute("Buy");
+        attrBuy.setValue(String.valueOf(banknote.getBanknoteBuying()));
+        currency.setAttributeNode(attrBuy);
+
+        Attr attrSell = doc.createAttribute("Sell");
+        attrSell.setValue(String.valueOf(banknote.getBanknoteSelling()));
+        currency.setAttributeNode(attrSell);
+
+        elements.get(1).appendChild(currency);
+    }
+
+    private void createXmlAttributeCross(List<Element> elements, CrossRates crossRates) {
+        Element currency = doc.createElement("Currency");
+        Attr attrPair = doc.createAttribute("Pair");
+        attrPair.setValue("USD/" + crossRates.getCurrencyCode());
+        currency.setAttributeNode(attrPair);
+
+        Attr attrUnit = doc.createAttribute("Unit");
+        attrUnit.setValue(String.valueOf(crossRates.getUnit()));
+        currency.setAttributeNode(attrUnit);
+
+        Attr attrRate = doc.createAttribute("Rate");
+        attrRate.setValue(String.valueOf(crossRates.getCrossRate()));
+        currency.setAttributeNode(attrRate);
+
+        elements.get(2).appendChild(currency);
+    }
 
     private void createXmlAttributeInformation(List<Element> elements, Information information) {
         Element currencyUsd = doc.createElement("Currency");
