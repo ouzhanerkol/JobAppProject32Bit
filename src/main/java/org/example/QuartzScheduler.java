@@ -1,5 +1,6 @@
 package org.example;
 
+import org.apache.log4j.Appender;
 import org.apache.log4j.BasicConfigurator;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -8,6 +9,10 @@ import org.quartz.SimpleScheduleBuilder;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
+
+import java.util.Locale;
+import java.util.ResourceBundle;
+
 public class QuartzScheduler {
     private static final String NAME_OF_JOB = "Job1";
     private static final String NAME_OF_GROUP = "group1";
@@ -19,7 +24,16 @@ public class QuartzScheduler {
     //main() method starts with exception handling
     public static void main(String args[]) throws Exception {
 
+        //java -cp jar org.example.QuartzScheduler "C:\\Users\\oguzh\\IdeaProjects\\JobAppProject32Bit\\config.properties" "C:\\Users\\oguzh\\IdeaProjects\\JobAppProject32Bit\\src\\main\\resources\\log4j2.xml"
+
+        //String PROP_PATH = args[0];
+
+        //String LOG4j = args[1];
+
         BasicConfigurator.configure();
+
+        //ResourceBundle resourceBundle = ResourceBundle.getBundle("config.properties", Locale.ENGLISH);
+        //resourceBundle.getString("last.modified");
 
         //show message to know about the main thread
         System.out.println(" The name of the QuartzScheduler main thread is: " + Thread.currentThread().getName());

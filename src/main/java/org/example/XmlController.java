@@ -154,7 +154,7 @@ public class XmlController {
         try {
             transformer = transformerFactory.newTransformer();
             DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(new File("Rates_" + getYyyyMMdd() + "_" + getHHmmss() + ".xml"));
+            StreamResult result = new StreamResult(new File("/main/java Rates_" + getYyyyMMdd() + "_" + getHHmmss() + ".xml"));
             transformer.transform(source, result);
         } catch (TransformerException e) {
             System.out.print(e.getMessage());
@@ -315,7 +315,7 @@ public class XmlController {
         }
     }
 
-    public static String getLastModified() throws IOException {//TODO get yap
+    public static String getLastModified() throws IOException {
         PropertiesConfiguration config = null;
         try {
             config = new PropertiesConfiguration("config.properties");
