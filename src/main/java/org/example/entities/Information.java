@@ -72,6 +72,13 @@ public class Information {
         this.informationUSD = informationRate;
     }
 
+    public double getInformationTRY() {
+        return informationTRY;
+    }
+
+    public void setInformationTRY(double informationTRY) {
+        this.informationTRY = informationTRY;
+    }
 
     @Override
     public String toString() {

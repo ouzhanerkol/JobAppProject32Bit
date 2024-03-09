@@ -72,7 +72,7 @@ public class QuartzScheduler {
     private static Trigger createTrigger() {
 
         //initialize time interval
-        int TIME_INTERVAL = 10;
+        int TIME_INTERVAL = 60;
 
         //create a trigger to be returned from the method
         Trigger triggerNew = TriggerBuilder.newTrigger().withIdentity(NAME_OF_TRIGGER, NAME_OF_GROUP)

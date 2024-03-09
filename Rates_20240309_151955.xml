@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Data Date="02/09/2024">
+    <Forex/>
+    <Banknote/>
+    <Cross/>
+    <Information>
+        <Currency Pair="SDR/USD" Rate="1.33473" Unit="1"/>
+        <Currency Pair="SDR/TRY" Rate="42.5652" Unit="1"/>
+    </Information>
+</Data>
