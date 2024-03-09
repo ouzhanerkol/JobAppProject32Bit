@@ -1,6 +1,6 @@
 package org.example.test;
 
-import org.example.entities.Forex;
+import org.example.model.Forex;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;

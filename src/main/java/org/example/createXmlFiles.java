@@ -1,6 +1,6 @@
 package org.example;
 
-import org.example.entities.Forex;
+import org.example.model.Forex;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

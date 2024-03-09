@@ -2,10 +2,10 @@ package org.example;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.example.entities.Banknote;
-import org.example.entities.CrossRates;
-import org.example.entities.Forex;
-import org.example.entities.Information;
+import org.example.model.Banknote;
+import org.example.model.CrossRates;
+import org.example.model.Forex;
+import org.example.model.Information;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -18,7 +18,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;

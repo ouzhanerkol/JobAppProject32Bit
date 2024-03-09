@@ -2,9 +2,9 @@ package org.example;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.example.entities.Banknote;
-import org.example.entities.Forex;
-import org.example.entities.Information;
+import org.example.model.Banknote;
+import org.example.model.Forex;
+import org.example.model.Information;
 import org.xml.sax.SAXException;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -25,8 +25,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.Element;
 
 import java.io.File;
-import java.util.Properties;
-import java.util.Scanner;
+
 public class Main {
     private static final String NAME_OF_URL = "https://www.tcmb.gov.tr/kurlar/today.xml";
     public static void main(String[] args) throws IOException {

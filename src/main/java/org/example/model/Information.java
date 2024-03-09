@@ -1,12 +1,10 @@
-package org.example.entities;
-
-import com.sun.istack.Nullable;
+package org.example.model;
 
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-public class Banknote {
+public class Information {
     @Id
     private int id;
 
@@ -17,27 +15,21 @@ public class Banknote {
 
     private int unit;
 
-    private double banknoteBuying;
+    private double informationUSD;
 
-    private double banknoteSelling;
+    private double informationTRY;
 
-    public Banknote() {
+    public Information() {
+
     }
 
-    public Banknote(int id, Date createDate, String currencyCode, int unit, double banknoteBuying, double banknoteSelling) {
+    public Information(int id, Date createDate, String currencyCode, int unit, double informationUSD, double informationTRY) {
         this.id = id;
         this.createDate = createDate;
         this.currencyCode = currencyCode;
         this.unit = unit;
-        this.banknoteBuying = banknoteBuying;
-        this.banknoteSelling = banknoteSelling;
-    }
-
-    public Banknote(int id, Date createDate, String currencyCode, int unit) {
-        this.id = id;
-        this.createDate = createDate;
-        this.currencyCode = currencyCode;
-        this.unit = unit;
+        this.informationUSD = informationUSD;
+        this.informationTRY = informationTRY;
     }
 
     public int getId() {
@@ -72,31 +64,30 @@ public class Banknote {
         this.unit = unit;
     }
 
-    public double getBanknoteBuying() {
-        return banknoteBuying;
+    public double getInformationUSD() {
+        return informationUSD;
     }
 
-    public void setBanknoteBuying(double banknoteBuying) {
-        this.banknoteBuying = banknoteBuying;
+    public void setInformationUSD(double informationRate) {
+        this.informationUSD = informationRate;
     }
 
-    public double getBanknoteSelling() {
-        return banknoteSelling;
+    public double getInformationTRY() {
+        return informationTRY;
     }
 
-    public void setBanknoteSelling(double banknoteSelling) {
-        this.banknoteSelling = banknoteSelling;
+    public void setInformationTRY(double informationTRY) {
+        this.informationTRY = informationTRY;
     }
 
     @Override
     public String toString() {
-        return "Banknote{" +
+        return "Information{" +
                 "id=" + id +
                 ", createDate=" + createDate +
                 ", currencyCode='" + currencyCode + '\'' +
                 ", unit=" + unit +
-                ", banknoteBuying=" + banknoteBuying +
-                ", banknoteSelling=" + banknoteSelling +
+                ", informationRate=" + informationUSD +
                 '}';
     }
 }

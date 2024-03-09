@@ -1,10 +1,10 @@
-package org.example.entities;
+package org.example.model;
 
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-public class Information {
+public class Banknote {
     @Id
     private int id;
 
@@ -15,21 +15,27 @@ public class Information {
 
     private int unit;
 
-    private double informationUSD;
+    private double banknoteBuying;
 
-    private double informationTRY;
+    private double banknoteSelling;
 
-    public Information() {
-
+    public Banknote() {
     }
 
-    public Information(int id, Date createDate, String currencyCode, int unit, double informationUSD, double informationTRY) {
+    public Banknote(int id, Date createDate, String currencyCode, int unit, double banknoteBuying, double banknoteSelling) {
         this.id = id;
         this.createDate = createDate;
         this.currencyCode = currencyCode;
         this.unit = unit;
-        this.informationUSD = informationUSD;
-        this.informationTRY = informationTRY;
+        this.banknoteBuying = banknoteBuying;
+        this.banknoteSelling = banknoteSelling;
+    }
+
+    public Banknote(int id, Date createDate, String currencyCode, int unit) {
+        this.id = id;
+        this.createDate = createDate;
+        this.currencyCode = currencyCode;
+        this.unit = unit;
     }
 
     public int getId() {
@@ -64,30 +70,31 @@ public class Information {
         this.unit = unit;
     }
 
-    public double getInformationUSD() {
-        return informationUSD;
+    public double getBanknoteBuying() {
+        return banknoteBuying;
     }
 
-    public void setInformationUSD(double informationRate) {
-        this.informationUSD = informationRate;
+    public void setBanknoteBuying(double banknoteBuying) {
+        this.banknoteBuying = banknoteBuying;
     }
 
-    public double getInformationTRY() {
-        return informationTRY;
+    public double getBanknoteSelling() {
+        return banknoteSelling;
     }
 
-    public void setInformationTRY(double informationTRY) {
-        this.informationTRY = informationTRY;
+    public void setBanknoteSelling(double banknoteSelling) {
+        this.banknoteSelling = banknoteSelling;
     }
 
     @Override
     public String toString() {
-        return "Information{" +
+        return "Banknote{" +
                 "id=" + id +
                 ", createDate=" + createDate +
                 ", currencyCode='" + currencyCode + '\'' +
                 ", unit=" + unit +
-                ", informationRate=" + informationUSD +
+                ", banknoteBuying=" + banknoteBuying +
+                ", banknoteSelling=" + banknoteSelling +
                 '}';
     }
 }
