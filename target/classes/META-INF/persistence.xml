@@ -5,10 +5,10 @@
 
     <persistence-unit name="persistence-unit" transaction-type="RESOURCE_LOCAL">
 
-        <class>org.example.entities.Information</class>
-        <class>org.example.entities.Banknote</class>
-        <class>org.example.entities.Forex</class>
-        <class>org.example.entities.CrossRates</class>
+        <class>org.example.model.Information</class>
+        <class>org.example.model.Banknote</class>
+        <class>org.example.model.Forex</class>
+        <class>org.example.model.CrossRates</class>
 
         <properties>
             <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
