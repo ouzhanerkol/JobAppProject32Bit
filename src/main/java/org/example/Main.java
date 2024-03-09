@@ -1,5 +1,7 @@
 package org.example;
 
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.example.entities.Banknote;
 import org.example.entities.Forex;
 import org.example.entities.Information;
@@ -23,43 +25,40 @@ import org.w3c.dom.Node;
 import org.w3c.dom.Element;
 
 import java.io.File;
+import java.util.Properties;
 import java.util.Scanner;
 public class Main {
     private static final String NAME_OF_URL = "https://www.tcmb.gov.tr/kurlar/today.xml";
     public static void main(String[] args) throws IOException {
-        URL url = new URL(NAME_OF_URL);
+        URL url = new URL("https://www.tcmb.gov.tr/kurlar/today.xml");
         HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+        urlConnection.setRequestMethod("GET");
+        urlConnection.connect();
         int connectionResponseCode = urlConnection.getResponseCode();
         long lastModified = urlConnection.getLastModified();
         String fileModifiedDate = null;
-        urlConnection.setRequestMethod("GET");
 
-        File lastModifiedFile = new File("lastModifiedFile.txt");
-        FileWriter fileWriter = new FileWriter(lastModifiedFile);
-        Scanner myReader = new Scanner(lastModifiedFile);
-
-        if (lastModifiedFile.createNewFile()) {
-            fileWriter.write(String.valueOf(lastModified));
-            fileWriter.close();
-        }else {
-            while (myReader.hasNextLine()) {
-                fileModifiedDate = myReader.nextLine();
-            }
-            if(!fileModifiedDate.equals(String.valueOf(lastModified))){
-
-            }else {
-
-            }
-            myReader.close();
+        PropertiesConfiguration config = null;
+        try {
+            config = new PropertiesConfiguration("config.properties");
+        } catch (ConfigurationException e) {
+            throw new RuntimeException(e);
         }
+        config.setProperty("last.modified", String.valueOf(lastModified));
+        try {
+            config.save();
+        } catch (ConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+
 
         EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("persistence-unit");
         EntityManager entityManager = entityManagerFactory.createEntityManager();
         EntityTransaction entityTransaction = entityManager.getTransaction();
 
         //System.out.println("Response Code: " + connectionResponseCode);
-
-        if (connectionResponseCode == HttpsURLConnection.HTTP_OK) {
+        String configString = config.getString("last.modified");
+        if (configString.equals(String.valueOf(lastModified))) {
 
             System.out.println("Last Modified: " + new Date(lastModified));
 
