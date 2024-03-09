@@ -1,7 +1,6 @@
 package org.example;
 
 import org.apache.log4j.BasicConfigurator;
-//import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
@@ -34,8 +33,6 @@ public class QuartzScheduler {
         //create scheduler trigger based on the time interval
         Trigger triggerNew =  createTrigger();
 
-        //create scheduler trigger with a cron expression
-        //Trigger triggerNew = createCronTrigger();
 
         //schedule trigger
         scheduleJob(triggerNew);
@@ -53,22 +50,6 @@ public class QuartzScheduler {
 
     }
 
-    //create createTrigger() method that returns a trigger based on the time interval
-    /*private static Trigger createCronTrigger() {
-
-        //create cron expression
-        String CRON_EXPRESSION = "0 * * * * ?";
-
-        //create a trigger to be returned from the method
-        Trigger triggerNew = TriggerBuilder.newTrigger().withIdentity(NAME_OF_TRIGGER, NAME_OF_GROUP)
-                .withSchedule(CronScheduleBuilder.cronSchedule(CRON_EXPRESSION)).build();
-
-        //return triggerNew to schedule it in main() method
-        return triggerNew;
-    }
-    */
-
-    //create createTrigger() method that returns a trigger based on the time interval
     private static Trigger createTrigger() {
 
         //initialize time interval

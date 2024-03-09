@@ -7,16 +7,11 @@ import java.util.Date;
 public class Forex {
     @Id
     private int id;
-
     @Temporal(TemporalType.TIMESTAMP)
     private Date createDate;
-
     private String currencyCode;
-
     private int unit;
-
     private double forexBuying;
-
     private double forexSelling;
 
     public Forex() {

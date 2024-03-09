@@ -2,6 +2,8 @@ package org.example;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.example.model.Banknote;
 import org.example.model.CrossRates;
 import org.example.model.Forex;
@@ -34,6 +36,7 @@ public class XmlController {
 
     private static final String NAME_OF_URL = "https://www.tcmb.gov.tr/kurlar/today.xml";
 
+    private static final Logger LOG = LogManager.getLogger(XmlController.class);
 
     private Document doc;
 
@@ -47,8 +50,8 @@ public class XmlController {
         long lastModified = urlConnection.getLastModified();
 
         if (connectionResponseCode == HttpsURLConnection.HTTP_OK) {
-            if (checkLastModified(lastModified)) {
-                System.out.println("Not modified yet.");
+            if (getLastModified().equals(String.valueOf(lastModified))) {
+                LOG.info("Not modified yet...");
             } else {
                 insertCurrencies(url);
                 setLastModified(lastModified);
@@ -66,11 +69,13 @@ public class XmlController {
             doc.getDocumentElement().normalize();
 
             System.out.println("Root element: " + doc.getDocumentElement().getNodeName());
-
+            LOG.info("getting Currencies successful");
             return doc.getElementsByTagName("Currency");
 
         } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw new RuntimeException(e);
+            System.out.print(e.getMessage());
+            LOG.error("Exception occured", new Exception("Document building failed.."));
+            return null;
         }
     }
 
@@ -84,13 +89,12 @@ public class XmlController {
 
         for (int itr = 0; itr < nodeList.getLength(); itr++) {
             Node node = nodeList.item(itr);
-            System.out.println("\nNode Name :" + node.getNodeName());
+            LOG.info("Collecting tags...");
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element eElement = (Element) node;
                 entityTransaction.begin();
+
                 String currencyCode = eElement.getAttribute("CurrencyCode");
-                int length = eElement.getElementsByTagName("ForexBuying").getLength();
-                NodeList forexBuying1 = eElement.getElementsByTagName("ForexBuying");
                 int unit = Integer.parseInt(eElement.getElementsByTagName("Unit").item(0).getTextContent());
                 double forexBuying = Double.parseDouble(eElement.getElementsByTagName("ForexBuying").item(0).getTextContent());
 
@@ -99,13 +103,13 @@ public class XmlController {
                     Information information = new Information(itr, new Date(), currencyCode, unit, crossRateOther, forexBuying);
                     createXmlAttributeInformation(elements, information);
                     entityManager.persist(information);
-                    System.out.println(information);
+                    LOG.info("Information finished");
                 } else {
                     double forexSelling = Double.parseDouble(eElement.getElementsByTagName("ForexSelling").item(0).getTextContent());
                     Forex forex = new Forex(itr, new Date(), currencyCode, unit, forexBuying, forexSelling);
                     createXmlAttributeForex(elements, forex);
                     entityManager.persist(forex);
-                    System.out.println(forex);
+
 
                     if (!eElement.getElementsByTagName("CrossRateUSD").item(0).getTextContent().equals("")) {
                         double crossRateOther = Double.parseDouble(eElement.getElementsByTagName("CrossRateUSD").item(0).getTextContent());
@@ -113,20 +117,17 @@ public class XmlController {
                         CrossRates crossRates = new CrossRates(itr, new Date(), currencyCode, unit, crossRateOther);
                         createXmlAttributeCross(elements, crossRates);
                         entityManager.persist(crossRates);
-                        System.out.println(crossRates);
 
                     } else if (!eElement.getElementsByTagName("CrossRateOther").item(0).getTextContent().equals("")) {
                         double crossRateUSD = Double.parseDouble(eElement.getElementsByTagName("CrossRateOther").item(0).getTextContent());
                         CrossRates crossRates = new CrossRates(itr, new Date(), currencyCode, unit, crossRateUSD);
                         entityManager.persist(crossRates);
-                        System.out.println(crossRates);
                     }
 
                     if (eElement.getElementsByTagName("BanknoteBuying").item(0).getTextContent().equals("") || eElement.getElementsByTagName("BanknoteSelling").item(0).getTextContent().equals("")) {
                         Banknote banknote = new Banknote(itr, new Date(), currencyCode, unit);
                         createXmlAttributeBanknote(elements, banknote);
                         entityManager.persist(banknote);
-                        System.out.println(banknote);
 
                     } else {
                         double banknoteBuying = Double.parseDouble(eElement.getElementsByTagName("BanknoteBuying").item(0).getTextContent());
@@ -134,32 +135,31 @@ public class XmlController {
                         Banknote banknote = new Banknote(itr, new Date(), currencyCode, unit, banknoteBuying, banknoteSelling);
                         createXmlAttributeBanknote(elements, banknote);
                         entityManager.persist(banknote);
-                        System.out.println(banknote);
                     }
                 }
                 entityTransaction.commit();
+                LOG.info("Currencies added successfully");
             }
         }
 
         createXmlFile();
     }
 
-
-
     private void createXmlFile() {
-
+        LOG.info("Xml file creating");
         // write the content into xml file
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = null;
+
         try {
             transformer = transformerFactory.newTransformer();
             DOMSource source = new DOMSource(doc);
             StreamResult result = new StreamResult(new File("Rates_" + getYyyyMMdd() + "_" + getHHmmss() + ".xml"));
             transformer.transform(source, result);
         } catch (TransformerException e) {
-            throw new RuntimeException(e);
+            System.out.print(e.getMessage());
+            LOG.error("Exception occured", new Exception("Creating xml failed.."));
         }
-
     }
 
     private String getYyyyMMdd() {
@@ -170,8 +170,6 @@ public class XmlController {
         SimpleDateFormat f = new SimpleDateFormat("HHmmss");
         return f.format(new Date());
     }
-
-
 
     private void createXmlAttributeForex(List<Element> elements, Forex forex){
         Element currency = doc.createElement("Currency");
@@ -192,6 +190,7 @@ public class XmlController {
         currency.setAttributeNode(attrSell);
 
         elements.get(0).appendChild(currency);
+        LOG.info("Exception occured");
     }
 
     private void createXmlAttributeBanknote(List<Element> elements, Banknote banknote) {
@@ -285,7 +284,7 @@ public class XmlController {
         doc.appendChild(rootElement);
         rootElement.setAttributeNode(attrType);
 
-        // supercars element
+        // child elements
         Element forex = doc.createElement("Forex");
         rootElement.appendChild(forex);
         elements.add(forex);
@@ -300,12 +299,6 @@ public class XmlController {
         elements.add(information);
         return elements;
     }
-    /*
-    public void addElement(Document doc, List<Element> elements, String str){
-        Element element = doc.createElement(str);
-        doc.getFirstChild().appendChild(element);
-        elements.add(element);
-    }*/
 
     public static void setLastModified(long lastModified) {
         PropertiesConfiguration config = null;
@@ -322,15 +315,14 @@ public class XmlController {
         }
     }
 
-    public static boolean checkLastModified(long lastModified) throws IOException {//TODO get yap
+    public static String getLastModified() throws IOException {//TODO get yap
         PropertiesConfiguration config = null;
         try {
             config = new PropertiesConfiguration("config.properties");
         } catch (ConfigurationException e) {
             throw new RuntimeException(e);
         }
-        String configString = config.getString("last.modified");
-        return configString.equals(String.valueOf(lastModified));
+        return config.getString("last.modified");
     }
 
 }

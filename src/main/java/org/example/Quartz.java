@@ -7,17 +7,19 @@ import org.quartz.JobExecutionException;
 import java.io.IOException;
 
 public class Quartz implements Job {
-    private Logger log = Logger.getLogger(Quartz.class);
+    private Logger LOG = Logger.getLogger(Quartz.class);
     XmlController xmlController = new XmlController();
 
     public void execute(JobExecutionContext jExeCtx) throws JobExecutionException {//handle JobExecutionException
 
         //debug message
-        log.debug("Quartz is running......");
+        LOG.debug("Quartz is running......");
         try {
             xmlController.connectURL();
+            LOG.debug("Connection completed...");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.print(e.getMessage());
+            LOG.error("Exception occured", new Exception("Connection failed.."));
         }
     }
 

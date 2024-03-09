@@ -7,16 +7,11 @@ import java.util.Date;
 public class CrossRates {
     @Id
     private int id;
-
     @Temporal(TemporalType.TIMESTAMP)
     private Date createDate;
-
     private String currencyCode;
-
     private int unit;
-
     private double crossRate;
-
     public CrossRates() {
     }
 
