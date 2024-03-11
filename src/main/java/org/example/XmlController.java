@@ -100,13 +100,13 @@ public class XmlController {
 
                 if (eElement.getAttribute("CurrencyCode").equals("XDR")) {
                     double crossRateOther = Double.parseDouble(eElement.getElementsByTagName("CrossRateOther").item(0).getTextContent());
-                    Information information = new Information(itr, new Date(), currencyCode, unit, crossRateOther, forexBuying);
+                    Information information = new Information(new Date(), currencyCode, unit, crossRateOther, forexBuying);
                     createXmlAttributeInformation(elements, information);
                     entityManager.persist(information);
                     LOG.info("Information finished");
                 } else {
                     double forexSelling = Double.parseDouble(eElement.getElementsByTagName("ForexSelling").item(0).getTextContent());
-                    Forex forex = new Forex(itr, new Date(), currencyCode, unit, forexBuying, forexSelling);
+                    Forex forex = new Forex(new Date(), currencyCode, unit, forexBuying, forexSelling);
                     createXmlAttributeForex(elements, forex);
                     entityManager.persist(forex);
 
@@ -114,25 +114,25 @@ public class XmlController {
                     if (!eElement.getElementsByTagName("CrossRateUSD").item(0).getTextContent().equals("")) {
                         double crossRateOther = Double.parseDouble(eElement.getElementsByTagName("CrossRateUSD").item(0).getTextContent());
 
-                        CrossRates crossRates = new CrossRates(itr, new Date(), currencyCode, unit, crossRateOther);
+                        CrossRates crossRates = new CrossRates(new Date(), currencyCode, unit, crossRateOther);
                         createXmlAttributeCross(elements, crossRates);
                         entityManager.persist(crossRates);
 
                     } else if (!eElement.getElementsByTagName("CrossRateOther").item(0).getTextContent().equals("")) {
                         double crossRateUSD = Double.parseDouble(eElement.getElementsByTagName("CrossRateOther").item(0).getTextContent());
-                        CrossRates crossRates = new CrossRates(itr, new Date(), currencyCode, unit, crossRateUSD);
+                        CrossRates crossRates = new CrossRates(new Date(), currencyCode, unit, crossRateUSD);
                         entityManager.persist(crossRates);
                     }
 
                     if (eElement.getElementsByTagName("BanknoteBuying").item(0).getTextContent().equals("") || eElement.getElementsByTagName("BanknoteSelling").item(0).getTextContent().equals("")) {
-                        Banknote banknote = new Banknote(itr, new Date(), currencyCode, unit);
+                        Banknote banknote = new Banknote(new Date(), currencyCode, unit);
                         createXmlAttributeBanknote(elements, banknote);
                         entityManager.persist(banknote);
 
                     } else {
                         double banknoteBuying = Double.parseDouble(eElement.getElementsByTagName("BanknoteBuying").item(0).getTextContent());
                         double banknoteSelling = Double.parseDouble(eElement.getElementsByTagName("BanknoteSelling").item(0).getTextContent());
-                        Banknote banknote = new Banknote(itr, new Date(), currencyCode, unit, banknoteBuying, banknoteSelling);
+                        Banknote banknote = new Banknote(new Date(), currencyCode, unit, banknoteBuying, banknoteSelling);
                         createXmlAttributeBanknote(elements, banknote);
                         entityManager.persist(banknote);
                     }
@@ -154,7 +154,7 @@ public class XmlController {
         try {
             transformer = transformerFactory.newTransformer();
             DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(new File("/main/java Rates_" + getYyyyMMdd() + "_" + getHHmmss() + ".xml"));
+            StreamResult result = new StreamResult(new File("Rates_" + getYyyyMMdd() + "_" + getHHmmss() + ".xml"));
             transformer.transform(source, result);
         } catch (TransformerException e) {
             System.out.print(e.getMessage());

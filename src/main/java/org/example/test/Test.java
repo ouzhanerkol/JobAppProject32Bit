@@ -15,7 +15,7 @@ public class Test {
         EntityManager entityManager = entityManagerFactory.createEntityManager();
         EntityTransaction entityTransaction = entityManager.getTransaction();
 
-        Forex forex = new Forex(1, new Date(), "USD", 1, 11.24, 11);
+        Forex forex = new Forex(new Date(), "USD", 1, 11.24, 11);
 
         entityTransaction.begin();
 

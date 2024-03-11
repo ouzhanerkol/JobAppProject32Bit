@@ -6,6 +6,7 @@ import java.util.Date;
 @Entity
 public class CrossRates {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
     @Temporal(TemporalType.TIMESTAMP)
     private Date createDate;
@@ -15,8 +16,7 @@ public class CrossRates {
     public CrossRates() {
     }
 
-    public CrossRates(int id, Date createDate, String currencyCode, int unit, double crossRate) {
-        this.id = id;
+    public CrossRates(Date createDate, String currencyCode, int unit, double crossRate) {
         this.createDate = createDate;
         this.currencyCode = currencyCode;
         this.unit = unit;

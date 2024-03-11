@@ -6,6 +6,7 @@ import java.util.Date;
 @Entity
 public class Information {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
     @Temporal(TemporalType.TIMESTAMP)
     private Date createDate;
@@ -18,8 +19,7 @@ public class Information {
 
     }
 
-    public Information(int id, Date createDate, String currencyCode, int unit, double informationUSD, double informationTRY) {
-        this.id = id;
+    public Information(Date createDate, String currencyCode, int unit, double informationUSD, double informationTRY) {
         this.createDate = createDate;
         this.currencyCode = currencyCode;
         this.unit = unit;

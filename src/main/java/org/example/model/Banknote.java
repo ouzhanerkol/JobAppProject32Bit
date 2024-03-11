@@ -6,6 +6,7 @@ import java.util.Date;
 @Entity
 public class Banknote {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
     @Temporal(TemporalType.TIMESTAMP)
     private Date createDate;
@@ -17,8 +18,7 @@ public class Banknote {
     public Banknote() {
     }
 
-    public Banknote(int id, Date createDate, String currencyCode, int unit, double banknoteBuying, double banknoteSelling) {
-        this.id = id;
+    public Banknote(Date createDate, String currencyCode, int unit, double banknoteBuying, double banknoteSelling) {
         this.createDate = createDate;
         this.currencyCode = currencyCode;
         this.unit = unit;
@@ -26,8 +26,7 @@ public class Banknote {
         this.banknoteSelling = banknoteSelling;
     }
 
-    public Banknote(int id, Date createDate, String currencyCode, int unit) {
-        this.id = id;
+    public Banknote(Date createDate, String currencyCode, int unit) {
         this.createDate = createDate;
         this.currencyCode = currencyCode;
         this.unit = unit;

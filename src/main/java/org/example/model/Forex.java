@@ -6,6 +6,7 @@ import java.util.Date;
 @Entity
 public class Forex {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
     @Temporal(TemporalType.TIMESTAMP)
     private Date createDate;
@@ -17,8 +18,7 @@ public class Forex {
     public Forex() {
     }
 
-    public Forex(int id, Date createDate, String currencyCode, int unit, double forexBuying, double forexSelling) {
-        this.id = id;
+    public Forex(Date createDate, String currencyCode, int unit, double forexBuying, double forexSelling) {
         this.createDate = createDate;
         this.currencyCode = currencyCode;
         this.unit = unit;
