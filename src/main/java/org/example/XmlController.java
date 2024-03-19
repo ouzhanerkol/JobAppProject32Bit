@@ -8,6 +8,7 @@ import org.example.model.Banknote;
 import org.example.model.CrossRates;
 import org.example.model.Forex;
 import org.example.model.Information;
+import org.jcp.xml.dsig.internal.dom.DOMXSLTTransform;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -43,7 +44,7 @@ public class XmlController {
     public void connectURL() throws IOException {
         URL url = new URL(NAME_OF_URL);
         HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
-        urlConnection.setRequestMethod("GET");
+        urlConnection.setRequestMethod("HEAD");
         urlConnection.connect();
 
         int connectionResponseCode = urlConnection.getResponseCode();
@@ -150,6 +151,7 @@ public class XmlController {
         // write the content into xml file
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = null;
+
 
         try {
             transformer = transformerFactory.newTransformer();
