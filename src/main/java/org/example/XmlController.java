@@ -1,6 +1,5 @@
 package org.example;
 
-import com.mysql.cj.log.Log;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.LogManager;
@@ -9,6 +8,7 @@ import org.example.model.*;
 import org.hibernate.HibernateException;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -28,17 +28,26 @@ public class XmlController {
     private static final Logger LOG = LogManager.getLogger(XmlController.class);
 
     /**
-     * Connects to a given URL link
+     * get currencies from given url and
+     * persist them to database
+     * and creates new xml file after the whole process is finished
+     *
      * @param nameOfUrl - the name of url address to provide connection
      * @throws IOException
      */
-    public void connectURL(String nameOfUrl) throws IOException {
+    public void getCurrenciesFromURL(String nameOfUrl) throws IOException {
+        LOG.trace("Entering method getCurrenciesFromURL().");
+        // creating url and open connection
+        // creating doc and dom source for xml transform
         URL url = new URL(nameOfUrl);
         HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+        Document doc = getDocFromUrl(url);
+        DOMSource domSource = new DOMSource(doc); // for xml transform
 
         // set request and url connect
         urlConnection.setRequestMethod("HEAD");
         urlConnection.connect();
+        LOG.debug("url connection done.");
 
         // we need few data from url
         int connectionResponseCode = urlConnection.getResponseCode();
@@ -46,14 +55,32 @@ public class XmlController {
 
         // checking connection first
         if (connectionResponseCode == HttpsURLConnection.HTTP_OK) {
+            LOG.debug("HTTP Status-Code 200: OK.");
             // if url updated
             // get currencies from url
             if (!(getLastModified().equals(String.valueOf(lastModified)))) {
-                getCurrenciesFromURL(url);
+                LOG.info("Url modified! PersistCurrencies() starting...");
+                persistCurrencies(doc);
+                LOG.trace("Setting last modified date.");
                 setLastModified(lastModified);
+                /*
+                After finish commit currencies, transform data
+                to new XML file with XSL Transform
+                */
+                try {
+                    XSLTProcessor.transformXMLUsingXSLT(
+                            domSource,
+                            "stylesheet.xslt",
+                            "Rates_" + getYyyyMMdd() + "_" + getHHmmss() + ".xml");
+                    LOG.info("XSL Transform done.");
+                } catch (TransformerException e) {
+                    LOG.error("Failed when transform xml with XSLT. Error: " + e);
+                    throw new RuntimeException(e);
+                }
             } else {
                 LOG.info("URL isn't updated yet...");
             }
+
         } else {
             LOG.error("URL connection is bad...");
         }
@@ -61,10 +88,12 @@ public class XmlController {
 
     /**
      * returns document from given url link
+     *
      * @param url - the url address to open Stream
      * @return the url document
      */
     public Document getDocFromUrl(URL url) {
+        LOG.trace("getting document from url..");
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         // an instance of builder to parse the specified xml file
         DocumentBuilder db = null;
@@ -82,35 +111,35 @@ public class XmlController {
     }
 
     /**
-     * get currencies from URL and writes them to database
-     * and creates new xml file after the whole process is finished
-     * @param url - source URL
+     * persist currencies to database
+     *
+     * @param doc - the document we obtained from the url
      */
-    public void getCurrenciesFromURL(URL url) {
-        // get doc from URL
-        // this doc needed for xml source and
-        // entity persist
-        Document doc = getDocFromUrl(url);
-        DOMSource domSource = new DOMSource(doc); // for xml transform
+    public void persistCurrencies(Document doc) {
+        // find currencies from document with tag name
+        // and assign to node list
         NodeList nodeList = doc.getElementsByTagName("Currency");
+        LOG.debug("Node list created.");
 
         // creating entity transaction with persistence unit
         // persistence-unit is name of persistence unit in persistence.xml
         EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("persistence-unit");
         EntityManager entityManager = entityManagerFactory.createEntityManager();
         EntityTransaction entityTransaction = entityManager.getTransaction();
-
+        LOG.debug("Entity manager and Entity created.");
 
         // processes each node in the list one by one
         for (int itr = 0; itr < nodeList.getLength(); itr++) {
+            LOG.debug("Collecting nodes...");
             Node node = nodeList.item(itr);
-            LOG.info("Collecting nodes...");
 
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element eElement = (Element) node;
                 // Start a resource transaction
+                LOG.info("Entity transaction begin");
                 entityTransaction.begin();
 
+                LOG.debug("Getting elements by tag names...");
                 // get all text content with tag name for entity elements
                 String currencyCode = eElement.getAttribute("CurrencyCode");
                 String unitTextContent = eElement.getElementsByTagName("Unit").item(0).getTextContent();
@@ -121,24 +150,27 @@ public class XmlController {
                 String crossRateUSDTextContent = eElement.getElementsByTagName("CrossRateUSD").item(0).getTextContent();
                 String crossRateOtherTextContent = eElement.getElementsByTagName("CrossRateOther").item(0).getTextContent();
 
+                LOG.trace("Parsing text contents");
                 // set parameters for entities
                 int unit = tryParseInt(unitTextContent);
                 double forexBuying = tryParseDouble(forexBuyingTextContent);
 
                 // For information data we need last node of list
                 if (itr == nodeList.getLength() - 1) {
+                    LOG.debug("Information persist started.");
                     // Create an instance of the Information and persist here
                     double crossRateOther = Double.parseDouble(crossRateOtherTextContent);
                     Information information = new Information(new Date(), currencyCode, unit, crossRateOther, forexBuying);
                     // persist Information to entity manager
                     entityManager.persist(information);
-                    LOG.info("Information finished");
+                    LOG.info("Information persist finished");
                 } else {
                     // getting forexSelling from node
                     // Create an instance of the Forex and persist here
                     double forexSelling = Double.parseDouble(forexSellingTextContent);
                     Forex forex = new Forex(new Date(), currencyCode, unit, forexBuying, forexSelling);
                     entityManager.persist(forex);
+                    LOG.info("Forex persist finished");
                     /*
                       There is two different cross rate in xml
                       So need to check which one is null
@@ -150,11 +182,13 @@ public class XmlController {
                         double crossRateUSD = Double.parseDouble(crossRateUSDTextContent);
                         CrossRates crossRates = new CrossRates(new Date(), currencyCode, unit, crossRateUSD);
                         entityManager.persist(crossRates);
+                        LOG.info("Cross rate USD persist finished");
                     } else if (!crossRateOtherTextContent.equals("")) {
                         // Create an instance of the crossRates with CrossRateOther
                         double crossRateOther = Double.parseDouble(crossRateOtherTextContent);
                         CrossRates crossRates = new CrossRates(new Date(), currencyCode, unit, crossRateOther);
                         entityManager.persist(crossRates);
+                        LOG.info("Cross rate Other persist finished");
                     }
 
                     // Because of some banknotes can be null, checking contents first
@@ -162,6 +196,7 @@ public class XmlController {
                     if (banknoteBuyingTextContent.equals("") || banknoteSellingTextContent.equals("")) {
                         Banknote banknote = new Banknote(new Date(), currencyCode, unit);
                         entityManager.persist(banknote);
+                        LOG.info("Banknote without buying and selling persist finished");
                     } else {
                         // get contents and parse them
                         // persist with banknote buying and banknote selling
@@ -169,6 +204,7 @@ public class XmlController {
                         double banknoteSelling = Double.parseDouble(banknoteSellingTextContent);
                         Banknote banknote = new Banknote(new Date(), currencyCode, unit, banknoteBuying, banknoteSelling);
                         entityManager.persist(banknote);
+                        LOG.info("Banknote with buying and selling persist finished");
                     }
                 }
                 // committing transaction
@@ -177,73 +213,74 @@ public class XmlController {
                     entityTransaction.commit();
                     LOG.info("Currencies added successfully");
 
-                } catch (HibernateException he){
+                } catch (HibernateException he) {
                     LOG.error("Adding Currencies failed!");
                     entityTransaction.rollback();
                 }
             }
         }
-        /*
-          After finish commit currencies, transform data
-          to new XML file with XSL Transform
-         */
-        try {
-            XSLTProcessor.transformXMLUsingXSLT(
-                    domSource,
-                    "stylesheet.xslt",
-                    "Rates_" + getYyyyMMdd() + "_" + getHHmmss() + ".xml");
-        } catch (TransformerException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**
      * Generates string in yyyyMMdd format for XML naming
+     *
      * @return string in Date format yyyyMMdd
      */
     private String getYyyyMMdd() {
+        LOG.trace("getting string in yyyyMMdd format..");
         SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
         return f.format(new Date());
     }
 
     /**
      * Generates string in HHmmss format for XML naming
+     *
      * @return string in Date format HHmmss
      */
     private String getHHmmss() {
+        LOG.trace("getting string in HHmmss format..");
         SimpleDateFormat f = new SimpleDateFormat("HHmmss");
         return f.format(new Date());
     }
 
     /**
      * updates the last modified variable in the config.properties file
+     *
      * @param lastModified - last modified variable from the url link
      */
     public static void setLastModified(long lastModified) {
+        LOG.trace("setting last modified date..");
         PropertiesConfiguration config = null;
         try {
             config = new PropertiesConfiguration("config.properties");
+            LOG.debug("configuration completed.");
         } catch (ConfigurationException e) {
+            LOG.error("configuration failed.");
             throw new RuntimeException(e);
         }
         config.setProperty("last.modified", String.valueOf(lastModified));
         try {
             config.save();
+            LOG.info("config saved.");
         } catch (ConfigurationException e) {
+            LOG.error("config save failed.");
             throw new RuntimeException(e);
         }
     }
 
     /**
      * Gets the value of the variable named last.modified in config.properties
+     *
      * @return the value of last.modified in the config file as String
-     * @throws IOException
      */
-    public static String getLastModified() throws IOException {
+    public static String getLastModified() {
+        LOG.trace("getting last modified date..");
         PropertiesConfiguration config = null;
         try {
             config = new PropertiesConfiguration("config.properties");
+            LOG.debug("configuration completed.");
         } catch (ConfigurationException e) {
+            LOG.error("configuration failed.");
             throw new RuntimeException(e);
         }
         return config.getString("last.modified");
@@ -252,6 +289,7 @@ public class XmlController {
     /**
      * A simple method to avoid problems with Exception
      * when converting the given text to integer
+     *
      * @param text - Text to be converted to integer
      * @return Integer converted from text
      */
@@ -267,6 +305,7 @@ public class XmlController {
     /**
      * A simple method to avoid problems with Exception
      * when converting the given text to double
+     *
      * @param text - Text to be converted to double
      * @return Double converted from text
      */

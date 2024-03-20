@@ -7,20 +7,20 @@ import org.quartz.JobExecutionException;
 import java.io.IOException;
 
 public class Quartz implements Job {
-    private Logger LOG = Logger.getLogger(Quartz.class);
+    private final Logger LOG = Logger.getLogger(Quartz.class);
     private static final String NAME_OF_URL = "https://www.tcmb.gov.tr/kurlar/today.xml";
     XmlController xmlController = new XmlController();
 
     public void execute(JobExecutionContext jExeCtx) throws JobExecutionException {//handle JobExecutionException
 
-        //debug message
+        // debug message
         LOG.debug("Quartz is running......");
         try {
-            //connect here
-            xmlController.connectURL(NAME_OF_URL);
-            LOG.debug("Connection completed...");
+            // connect here
+            xmlController.getCurrenciesFromURL(NAME_OF_URL);
+            LOG.info("Getting currencies is completed...");
         } catch (IOException e) {
-            //connection failed
+            // connection failed
             LOG.error("Exception occured", new Exception("Connection failed.."));
         }
     }
