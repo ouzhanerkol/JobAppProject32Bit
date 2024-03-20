@@ -1,10 +1,12 @@
 package org.example;
 
+import com.mysql.cj.log.Log;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.example.model.*;
+import org.hibernate.HibernateException;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 import javax.net.ssl.HttpsURLConnection;
@@ -16,6 +18,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+import javax.xml.transform.dom.DOMSource;
 import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -33,11 +36,11 @@ public class XmlController {
         URL url = new URL(nameOfUrl);
         HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
 
-        //set request and url connect
+        // set request and url connect
         urlConnection.setRequestMethod("HEAD");
         urlConnection.connect();
 
-        //we need few data from url
+        // we need few data from url
         int connectionResponseCode = urlConnection.getResponseCode();
         long lastModified = urlConnection.getLastModified();
 
@@ -57,22 +60,21 @@ public class XmlController {
     }
 
     /**
-     * returns the currency list from the xml file in a given url link
+     * returns document from given url link
      * @param url - the url address to open Stream
-     * @return the currency list
+     * @return the url document
      */
-    public NodeList getCurrencyNodeList(URL url) {
+    public Document getDocFromUrl(URL url) {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        //an instance of builder to parse the specified xml file
+        // an instance of builder to parse the specified xml file
         DocumentBuilder db = null;
         try {
-            // parse the xml file to doc and return the currency list
+            // parse the xml file to doc and return
             db = dbf.newDocumentBuilder();
             Document doc = db.parse(url.openStream());
             doc.getDocumentElement().normalize();
-            LOG.info("getting Currencies is successful");
-
-            return doc.getElementsByTagName("Currency");
+            LOG.info("Building xml document is successful");
+            return doc;
         } catch (ParserConfigurationException | IOException | SAXException e) {
             LOG.error("Exception occured", new Exception("Document building failed.."));
             return null;
@@ -85,8 +87,12 @@ public class XmlController {
      * @param url - source URL
      */
     public void getCurrenciesFromURL(URL url) {
-        // get currencies with node list from URL
-        NodeList nodeList = getCurrencyNodeList(url);
+        // get doc from URL
+        // this doc needed for xml source and
+        // entity persist
+        Document doc = getDocFromUrl(url);
+        DOMSource domSource = new DOMSource(doc); // for xml transform
+        NodeList nodeList = doc.getElementsByTagName("Currency");
 
         // creating entity transaction with persistence unit
         // persistence-unit is name of persistence unit in persistence.xml
@@ -94,62 +100,96 @@ public class XmlController {
         EntityManager entityManager = entityManagerFactory.createEntityManager();
         EntityTransaction entityTransaction = entityManager.getTransaction();
 
+
         // processes each node in the list one by one
         for (int itr = 0; itr < nodeList.getLength(); itr++) {
             Node node = nodeList.item(itr);
-            LOG.info("Collecting tags...");
+            LOG.info("Collecting nodes...");
+
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element eElement = (Element) node;
                 // Start a resource transaction
                 entityTransaction.begin();
 
-                // get elements with tag name for CurrencyCode, Unit and ForexBuying
+                // get all text content with tag name for entity elements
                 String currencyCode = eElement.getAttribute("CurrencyCode");
-                int unit = Integer.parseInt(eElement.getElementsByTagName("Unit").item(0).getTextContent());
-                double forexBuying = Double.parseDouble(eElement.getElementsByTagName("ForexBuying").item(0).getTextContent());
+                String unitTextContent = eElement.getElementsByTagName("Unit").item(0).getTextContent();
+                String forexBuyingTextContent = eElement.getElementsByTagName("ForexBuying").item(0).getTextContent();
+                String forexSellingTextContent = eElement.getElementsByTagName("ForexSelling").item(0).getTextContent();
+                String banknoteBuyingTextContent = eElement.getElementsByTagName("BanknoteBuying").item(0).getTextContent();
+                String banknoteSellingTextContent = eElement.getElementsByTagName("BanknoteSelling").item(0).getTextContent();
+                String crossRateUSDTextContent = eElement.getElementsByTagName("CrossRateUSD").item(0).getTextContent();
+                String crossRateOtherTextContent = eElement.getElementsByTagName("CrossRateOther").item(0).getTextContent();
 
+                // set parameters for entities
+                int unit = tryParseInt(unitTextContent);
+                double forexBuying = tryParseDouble(forexBuyingTextContent);
+
+                // For information data we need last node of list
                 if (itr == nodeList.getLength() - 1) {
-                    double crossRateOther = Double.parseDouble(eElement.getElementsByTagName("CrossRateOther").item(0).getTextContent());
+                    // Create an instance of the Information and persist here
+                    double crossRateOther = Double.parseDouble(crossRateOtherTextContent);
                     Information information = new Information(new Date(), currencyCode, unit, crossRateOther, forexBuying);
                     // persist Information to entity manager
                     entityManager.persist(information);
                     LOG.info("Information finished");
                 } else {
-                    double forexSelling = Double.parseDouble(eElement.getElementsByTagName("ForexSelling").item(0).getTextContent());
+                    // getting forexSelling from node
+                    // Create an instance of the Forex and persist here
+                    double forexSelling = Double.parseDouble(forexSellingTextContent);
                     Forex forex = new Forex(new Date(), currencyCode, unit, forexBuying, forexSelling);
                     entityManager.persist(forex);
-
-
-                    if (!eElement.getElementsByTagName("CrossRateUSD").item(0).getTextContent().equals("")) {
-                        double crossRateOther = Double.parseDouble(eElement.getElementsByTagName("CrossRateUSD").item(0).getTextContent());
-
-                        CrossRates crossRates = new CrossRates(new Date(), currencyCode, unit, crossRateOther);
-                        entityManager.persist(crossRates);
-
-                    } else if (!eElement.getElementsByTagName("CrossRateOther").item(0).getTextContent().equals("")) {
-                        double crossRateUSD = Double.parseDouble(eElement.getElementsByTagName("CrossRateOther").item(0).getTextContent());
+                    /*
+                      There is two different cross rate in xml
+                      So need to check which one is null
+                      CrossRateUSD is holding USD/{CurrencyCode}
+                      CrossRateOther is holding {CurrencyCode}/USD
+                     */
+                    if (!crossRateUSDTextContent.equals("")) {
+                        // Create an instance of the crossRates with CrossRateUSD
+                        double crossRateUSD = Double.parseDouble(crossRateUSDTextContent);
                         CrossRates crossRates = new CrossRates(new Date(), currencyCode, unit, crossRateUSD);
+                        entityManager.persist(crossRates);
+                    } else if (!crossRateOtherTextContent.equals("")) {
+                        // Create an instance of the crossRates with CrossRateOther
+                        double crossRateOther = Double.parseDouble(crossRateOtherTextContent);
+                        CrossRates crossRates = new CrossRates(new Date(), currencyCode, unit, crossRateOther);
                         entityManager.persist(crossRates);
                     }
 
-                    if (eElement.getElementsByTagName("BanknoteBuying").item(0).getTextContent().equals("") || eElement.getElementsByTagName("BanknoteSelling").item(0).getTextContent().equals("")) {
+                    // Because of some banknotes can be null, checking contents first
+                    // If null, persist without banknote buying and banknote selling
+                    if (banknoteBuyingTextContent.equals("") || banknoteSellingTextContent.equals("")) {
                         Banknote banknote = new Banknote(new Date(), currencyCode, unit);
                         entityManager.persist(banknote);
-
                     } else {
-                        double banknoteBuying = Double.parseDouble(eElement.getElementsByTagName("BanknoteBuying").item(0).getTextContent());
-                        double banknoteSelling = Double.parseDouble(eElement.getElementsByTagName("BanknoteSelling").item(0).getTextContent());
+                        // get contents and parse them
+                        // persist with banknote buying and banknote selling
+                        double banknoteBuying = Double.parseDouble(banknoteBuyingTextContent);
+                        double banknoteSelling = Double.parseDouble(banknoteSellingTextContent);
                         Banknote banknote = new Banknote(new Date(), currencyCode, unit, banknoteBuying, banknoteSelling);
                         entityManager.persist(banknote);
                     }
                 }
-                entityTransaction.commit();
-                LOG.info("Currencies added successfully");
+                // committing transaction
+                // if throws exception than rollback the previous changes
+                try {
+                    entityTransaction.commit();
+                    LOG.info("Currencies added successfully");
+
+                } catch (HibernateException he){
+                    LOG.error("Adding Currencies failed!");
+                    entityTransaction.rollback();
+                }
             }
         }
+        /*
+          After finish commit currencies, transform data
+          to new XML file with XSL Transform
+         */
         try {
             XSLTProcessor.transformXMLUsingXSLT(
-                    "input.xml", // TODO: change this part
+                    domSource,
                     "stylesheet.xslt",
                     "Rates_" + getYyyyMMdd() + "_" + getHHmmss() + ".xml");
         } catch (TransformerException e) {
@@ -207,5 +247,35 @@ public class XmlController {
             throw new RuntimeException(e);
         }
         return config.getString("last.modified");
+    }
+
+    /**
+     * A simple method to avoid problems with Exception
+     * when converting the given text to integer
+     * @param text - Text to be converted to integer
+     * @return Integer converted from text
+     */
+    public static Integer tryParseInt(String text) {
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            LOG.error("Failed when try parse " + text + " to int!");
+            return null;
+        }
+    }
+
+    /**
+     * A simple method to avoid problems with Exception
+     * when converting the given text to double
+     * @param text - Text to be converted to double
+     * @return Double converted from text
+     */
+    public static Double tryParseDouble(String text) {
+        try {
+            return Double.parseDouble(text);
+        } catch (NumberFormatException e) {
+            LOG.error("Failed when try parse " + text + " to double!");
+            return null;
+        }
     }
 }
