@@ -8,6 +8,7 @@ import java.io.IOException;
 
 public class Quartz implements Job {
     private Logger LOG = Logger.getLogger(Quartz.class);
+    private static final String NAME_OF_URL = "https://www.tcmb.gov.tr/kurlar/today.xml";
     XmlController xmlController = new XmlController();
 
     public void execute(JobExecutionContext jExeCtx) throws JobExecutionException {//handle JobExecutionException
@@ -15,10 +16,11 @@ public class Quartz implements Job {
         //debug message
         LOG.debug("Quartz is running......");
         try {
-            xmlController.connectURL();
+            //connect here
+            xmlController.connectURL(NAME_OF_URL);
             LOG.debug("Connection completed...");
         } catch (IOException e) {
-            System.out.print(e.getMessage());
+            //connection failed
             LOG.error("Exception occured", new Exception("Connection failed.."));
         }
     }
