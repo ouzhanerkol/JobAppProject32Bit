@@ -8,6 +8,7 @@
             </xsl:attribute>
             <Forex>
                 <xsl:for-each select="Tarih_Date/Currency">
+                    <xsl:sort select="@CurrencyCode"/>
                     <Currency Pair="{@CurrencyCode}/TRY">
                         <xsl:attribute name="Unit">
                             <xsl:value-of select="Unit"/>
