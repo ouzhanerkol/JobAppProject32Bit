@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Data Date="03/22/2024">
+    <Forex>
+        <Currency Pair="AED/TRY" Unit="1" Buy="8.6560" Sell="8.7693"/>
+        <Currency Pair="AUD/TRY" Unit="1" Buy="20.7821" Sell="20.9176"/>
+        <Currency Pair="AZN/TRY" Unit="1" Buy="18.6990" Sell="18.9437"/>
+        <Currency Pair="BGN/TRY" Unit="1" Buy="17.5844" Sell="17.8145"/>
+        <Currency Pair="CAD/TRY" Unit="1" Buy="23.5236" Sell="23.6297"/>
+        <Currency Pair="CHF/TRY" Unit="1" Buy="35.4318" Sell="35.6593"/>
+        <Currency Pair="CNY/TRY" Unit="1" Buy="4.3981" Sell="4.4557"/>
+        <Currency Pair="DKK/TRY" Unit="1" Buy="4.6303" Sell="4.6530"/>
+        <Currency Pair="EUR/TRY" Unit="1" Buy="34.5875" Sell="34.6498"/>
+        <Currency Pair="GBP/TRY" Unit="1" Buy="40.2028" Sell="40.4124"/>
+        <Currency Pair="IRR/TRY" Unit="100" Buy="0.07569" Sell="0.07668"/>
+        <Currency Pair="JPY/TRY" Unit="100" Buy="21.0514" Sell="21.1908"/>
+        <Currency Pair="KRW/TRY" Unit="1" Buy="0.02366" Sell="0.02397"/>
+        <Currency Pair="KWD/TRY" Unit="1" Buy="103.2790" Sell="104.6304"/>
+        <Currency Pair="NOK/TRY" Unit="1" Buy="2.9672" Sell="2.9872"/>
+        <Currency Pair="PKR/TRY" Unit="1" Buy="0.11409" Sell="0.11559"/>
+        <Currency Pair="QAR/TRY" Unit="1" Buy="8.7163" Sell="8.8303"/>
+        <Currency Pair="RON/TRY" Unit="1" Buy="6.9163" Sell="7.0068"/>
+        <Currency Pair="RUB/TRY" Unit="1" Buy="0.34200" Sell="0.34647"/>
+        <Currency Pair="SAR/TRY" Unit="1" Buy="8.5240" Sell="8.5394"/>
+        <Currency Pair="SEK/TRY" Unit="1" Buy="3.0201" Sell="3.0513"/>
+        <Currency Pair="USD/TRY" Unit="1" Buy="31.9675" Sell="32.0251"/>
+        <Currency Pair="XDR/TRY" Unit="1" Buy="42.4055" Sell=""/>
+    </Forex>
+    <Banknote>
+        <Currency Pair="USD/TRY" Unit="1" Buy="31.9451" Sell="32.0731"/>
+        <Currency Pair="AUD/TRY" Unit="1" Buy="20.6865" Sell="21.0431"/>
+        <Currency Pair="DKK/TRY" Unit="1" Buy="4.6270" Sell="4.6637"/>
+        <Currency Pair="EUR/TRY" Unit="1" Buy="34.5633" Sell="34.7018"/>
+        <Currency Pair="GBP/TRY" Unit="1" Buy="40.1747" Sell="40.4730"/>
+        <Currency Pair="CHF/TRY" Unit="1" Buy="35.3786" Sell="35.7127"/>
+        <Currency Pair="SEK/TRY" Unit="1" Buy="3.0180" Sell="3.0584"/>
+        <Currency Pair="CAD/TRY" Unit="1" Buy="23.4366" Sell="23.7195"/>
+        <Currency Pair="KWD/TRY" Unit="1" Buy="101.7298" Sell="106.1998"/>
+        <Currency Pair="NOK/TRY" Unit="1" Buy="2.9651" Sell="2.9940"/>
+        <Currency Pair="SAR/TRY" Unit="1" Buy="8.4601" Sell="8.6034"/>
+        <Currency Pair="JPY/TRY" Unit="100" Buy="20.9735" Sell="21.2713"/>
+    </Banknote>
+    <Cross>
+        <Currency Pair="USD/AUD" CrossOrder="1" Unit="1" Rate="1.5346"/>
+        <Currency Pair="USD/DKK" CrossOrder="2" Unit="1" Rate="6.8933"/>
+        <Currency Pair="EUR/USD" CrossOrder="9" Unit="1" Rate="1.0820"/>
+        <Currency Pair="GBP/USD" CrossOrder="10" Unit="1" Rate="1.2598"/>
+        <Currency Pair="USD/CHF" CrossOrder="3" Unit="1" Rate="0.9002"/>
+        <Currency Pair="USD/SEK" CrossOrder="4" Unit="1" Rate="10.54"/>
+        <Currency Pair="USD/CAD" CrossOrder="6" Unit="1" Rate="1.3571"/>
+        <Currency Pair="KWD/USD" CrossOrder="11" Unit="1" Rate="3.2490"/>
+        <Currency Pair="USD/NOK" CrossOrder="7" Unit="1" Rate="10.75"/>
+        <Currency Pair="USD/SAR" CrossOrder="8" Unit="1" Rate="3.7503"/>
+        <Currency Pair="USD/JPY" CrossOrder="5" Unit="100" Rate="151.49"/>
+        <Currency Pair="USD/BGN" CrossOrder="12" Unit="1" Rate="1.8078"/>
+        <Currency Pair="USD/RON" CrossOrder="13" Unit="1" Rate="4.5962"/>
+        <Currency Pair="USD/RUB" CrossOrder="14" Unit="1" Rate="92.95"/>
+        <Currency Pair="USD/IRR" CrossOrder="15" Unit="100" Rate="42000"/>
+        <Currency Pair="USD/CNY" CrossOrder="16" Unit="1" Rate="7.2277"/>
+        <Currency Pair="USD/PKR" CrossOrder="17" Unit="1" Rate="278.62"/>
+        <Currency Pair="USD/QAR" CrossOrder="18" Unit="1" Rate="3.6470"/>
+        <Currency Pair="USD/KRW" CrossOrder="19" Unit="1" Rate="1343"/>
+        <Currency Pair="USD/AZN" CrossOrder="20" Unit="1" Rate="1.7000"/>
+        <Currency Pair="USD/AED" CrossOrder="21" Unit="1" Rate="3.6724"/>
+    </Cross>
+    <Information>
+        <Currency Pair="SDR/USD" Unit="1" Rate="1.32533"/>
+        <Currency Pair="SDR/TRY" Unit="1" Rate="42.4055"/>
+    </Information>
+</Data>

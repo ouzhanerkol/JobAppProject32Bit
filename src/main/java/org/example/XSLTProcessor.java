@@ -1,5 +1,8 @@
 package org.example;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -7,6 +10,7 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 
 public class XSLTProcessor {
+    private static final Logger LOG = LogManager.getLogger(XmlController.class);
     /**
      * this method transforms data from one xml file
      * to another xml file using xslt file
@@ -18,6 +22,7 @@ public class XSLTProcessor {
      * @throws TransformerException
      */
     public static void transformXMLUsingXSLT(DOMSource domSource, String xsltPath, String outputXMLPath) throws TransformerException {
+        LOG.info("Starting XSL Transformation using XSLT: " + xsltPath);
         // set xslt file for transformer source and
         // set output for xml path
         Source xsltSource = new StreamSource(new File(xsltPath));
@@ -28,5 +33,7 @@ public class XSLTProcessor {
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer(xsltSource);
         transformer.transform(domSource, output);
+
+        LOG.info("XSL Transformation completed successfully.");
     }
 }

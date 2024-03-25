@@ -17,11 +17,11 @@ public class Quartz implements Job {
         LOG.debug("Quartz is running......");
         try {
             // connect here
+            LOG.info("Getting currencies is starting...");
             xmlController.getCurrenciesFromURL(NAME_OF_URL);
-            LOG.info("Getting currencies is completed...");
         } catch (IOException e) {
             // connection failed
-            LOG.error("Exception occured", new Exception("Connection failed.."));
+            LOG.error("Exception occurred", new Exception("Connection failed.."));
         }
     }
 
