@@ -14,10 +14,8 @@ import javax.persistence.Persistence;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Source;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -38,9 +36,9 @@ public class XmlController {
             "CrossRateUSD",
             "CrossRateOther"
     };
-    
+
     /**
-     * Fetches currencies from a given URL, 
+     * Fetches currencies from a given URL,
      * persists them to the database,
      * and creates a new transformed XML file.
      *
@@ -184,9 +182,11 @@ public class XmlController {
         try {
             entityManagerFactory = Persistence.createEntityManagerFactory("persistence-unit");
             entityManager = entityManagerFactory.createEntityManager();
+            entityTransaction = entityManager.getTransaction();
+            entityTransaction.begin();
+            LOG.info("Entity transaction began!");
 
-            entityTransaction = persistCurrencies(entityManager, doc);
-
+            persistCurrencies(entityManager, doc);
             entityTransaction.commit();
             LOG.info("Currencies added successfully");
         } catch (Exception e) {
@@ -205,11 +205,7 @@ public class XmlController {
         }
     }
 
-    private EntityTransaction persistCurrencies(EntityManager entityManager, Document doc) {
-        EntityTransaction entityTransaction = entityManager.getTransaction();
-        entityTransaction.begin();
-        LOG.info("Entity transaction began!");
-
+    private void persistCurrencies(EntityManager entityManager, Document doc) {
         // Find currencies from document with tag name and
         // assign to node list
         NodeList nodeList = doc.getElementsByTagName("Currency");
@@ -225,107 +221,67 @@ public class XmlController {
                 // we need to be converting our node to element
                 Element element = (Element) node;
 
-                LOG.debug("Getting map list by tag names..");
+                String currencyCode = element.getAttribute("CurrencyCode");
+                int unit = parseIntUnit(element);
                 Map<String, Double> currencyMap = null;
                 try {
                     currencyMap = getListByTagNames(element);
-                    LOG.debug("Currency map list created.");
                 } catch (CurrencyDataParseException e) {
                     throw new RuntimeException(e);
                 }
-
-                LOG.debug("Getting elements by tag names...");
-                // get currency code for insert database
-                String currencyCode = element.getAttribute("CurrencyCode");
-
-                LOG.trace("Getting unit...");
-                int unit = parseIntUnit(element);
 
                 // For information data we need last node of list
                 if (itr == nodeList.getLength() - 1) {
                     // Create an instance of the Information and
                     // insert to the database
                     LOG.debug("Information persist starting...");
-                    try {
-                        Information information = new Information(
-                                new Date(),
-                                currencyCode,
-                                unit,
-                                currencyMap.get("CrossRateOther"),
-                                currencyMap.get("ForexBuying"));
-                        entityManager.persist(information);
-                        LOG.info("Information persist finished");
-                    } catch (Exception e) {
-                        LOG.error("Information persist failed. Transaction is being rolled back. Error:" + e.getMessage());
-                        entityTransaction.rollback();
-                    }
+                    persistInformation(entityManager, currencyCode, unit, currencyMap);
+
                 } else {
                     // Create an instance of the Forex and
                     // insert to the database
-                    LOG.debug("Forex persist starting...");
-                    try {
-                        Forex forex = new Forex(
-                                new Date(),
-                                currencyCode,
-                                unit,
-                                currencyMap.get("ForexBuying"),
-                                currencyMap.get("ForexSelling"));
-                        entityManager.persist(forex);
-                        LOG.info("Forex persist finished.");
-                    } catch (Exception e) {
-                        LOG.error("Forex persist failed. Transaction is being rolled back. Error:" + e.getMessage());
-                        entityTransaction.rollback();
-                    }
-
-                    // Create an instance of the Banknote and
-                    // insert to the database
-                    LOG.debug("Banknote persist starting...");
-
-                    try {
-                        // Because of some banknotes can be null, checking contents first
-                        // If null, persist without banknote buying and banknote selling
-                        Banknote banknote = new Banknote(
-                                new Date(),
-                                currencyCode,
-                                unit,
-                                currencyMap.containsKey("BanknoteBuying") ? currencyMap.get("BanknoteBuying") : 0,
-                                currencyMap.containsKey("BanknoteSelling") ? currencyMap.get("BanknoteSelling") : 0);
-                        entityManager.persist(banknote);
-                        LOG.info("Banknote (with buying and selling) persist finished.");
-                    } catch (Exception e) {
-                        LOG.error("Banknote persist failed. Transaction is being rolled back. Error:" + e.getMessage());
-                        entityTransaction.rollback();
-                    }
-
+                    persistForex(entityManager, currencyCode, unit, currencyMap);
+                    persistBanknote(entityManager, currencyCode, unit, currencyMap);
                     if (itr != 0) {
-                        // Create an instance of the Cross Rate and
-                        // insert to the database
-                        LOG.debug("Cross Rate persist starting...");
-
-                        try {
-                            /*
-                            There is two different cross rate in xml
-                            So need to check which one is null
-                            CrossRateUSD is holding USD/{CurrencyCode}
-                            CrossRateOther is holding {CurrencyCode}/USD
-                             */
-                            CrossRates crossRates = new CrossRates(
-                                    new Date(),
-                                    currencyCode,
-                                    unit,
-                                    currencyMap.containsKey("CrossRateUSD") ?
-                                            currencyMap.get("CrossRateUSD") : currencyMap.get("CrossRateOther"));
-                            entityManager.persist(crossRates);
-                            LOG.info("Cross rate persist finished.");
-                        } catch (Exception e) {
-                            LOG.error("Cross rate persist failed. Transaction is being rolled back. Error:" + e.getMessage());
-                            entityTransaction.rollback();
-                        }
+                        persistCrossRate(entityManager, currencyCode, unit, currencyMap);
                     }
                 }
             }
         }
-        return entityTransaction;
+    }
+
+    private void persistCrossRate(EntityManager entityManager, String currencyCode, int unit, Map<String, Double> currencyMap) {
+        LOG.debug("Cross Rate persist starting...");
+        double crossRate = currencyMap.containsKey("CrossRateUSD") ?
+                currencyMap.get("CrossRateUSD") : currencyMap.get("CrossRateOther");
+        CrossRates crossRates = new CrossRates(new Date(), currencyCode, unit, crossRate);
+        entityManager.persist(crossRates);
+        LOG.info("Cross rate persist finished.");
+    }
+
+    private void persistBanknote(EntityManager entityManager, String currencyCode, int unit, Map<String, Double> currencyMap) {
+        LOG.debug("Banknote persist starting...");
+        double buying = currencyMap.getOrDefault("BanknoteBuying", 0.0);
+        double selling = currencyMap.getOrDefault("BanknoteSelling", 0.0);
+        Banknote banknote = new Banknote(new Date(), currencyCode, unit, buying, selling);
+        entityManager.persist(banknote);
+        LOG.info("Banknote persist finished");
+    }
+
+    private void persistForex(EntityManager entityManager, String currencyCode, int unit, Map<String, Double> currencyMap) {
+        // Implement logic to persist Forex entity based on currencyMap values
+        LOG.debug("Forex persist starting...");
+        Forex forex = new Forex(new Date(), currencyCode, unit, currencyMap.get("ForexBuying"), currencyMap.get("ForexSelling"));
+        entityManager.persist(forex);
+        LOG.info("Forex persist finished");
+    }
+
+    private void persistInformation(EntityManager entityManager, String currencyCode, int unit, Map<String, Double> currencyMap) {
+        // Implement logic to persist Information entity based on currencyMap values
+        LOG.debug("Information persist starting...");
+        Information information = new Information(new Date(), currencyCode, unit, currencyMap.get("CrossRateOther"), currencyMap.get("ForexBuying"));
+        entityManager.persist(information);
+        LOG.info("Information persist finished");
     }
 
     private int parseIntUnit(Element element) {
