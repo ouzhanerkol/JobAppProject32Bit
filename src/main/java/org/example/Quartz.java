@@ -17,7 +17,6 @@ public class Quartz implements Job {
         LOG.debug("Quartz is running......");
         try {
             // connect here
-            LOG.info("Getting currencies is starting...");
             xmlController.getCurrenciesFromURL(NAME_OF_URL);
         } catch (IOException e) {
             // connection failed

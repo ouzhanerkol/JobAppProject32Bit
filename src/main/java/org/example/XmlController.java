@@ -107,7 +107,17 @@ public class XmlController {
         }
     }
 
-    private void processCurrencies(URL url, long lastModified) {
+    /**
+     * Processes the retrieved currencies from the provided URL.
+     * This includes checking for updates, committing data to the database,
+     * and generating a transformed XML file.
+     *
+     * @param url - the URL object representing the currency data source
+     * @param lastModified - the last modified timestamp of the remote resource
+     * @throws RuntimeException - if an unexpected error occurs during processing
+     */
+    private void processCurrencies(URL url, long lastModified) throws RuntimeException {
+        LOG.info("Starting processCurrencies with URL: " + url);
         Document doc = null;
         try {
             doc = getDocFromUrl(url);
@@ -137,6 +147,13 @@ public class XmlController {
         LOG.info("Getting currencies is completed...");
     }
 
+    /**
+     * Validates the provided URL string.
+     * Checks for null or empty strings.
+     *
+     * @param urlString - the URL string to validate
+     * @throws IllegalArgumentException - if the URL string is null or empty
+     */
     private void validateUrl(String urlString) {
         if (urlString == null || urlString.isEmpty()) {
             throw new IllegalArgumentException("urlString cannot be null or empty");
@@ -145,10 +162,11 @@ public class XmlController {
 
     /**
      * Retrieves a document object from the provided URL.
+     * Handles potential exceptions during document parsing and throws appropriate exceptions.
      *
      * @param url - the url address to open Stream
      * @return the parsed document object
-     * @throws IOException if an IO error occurs
+     * @throws IOException - if an IO error occurs
      */
     public Document getDocFromUrl(URL url) throws IOException {
         LOG.trace("getting document from url..");
@@ -205,16 +223,24 @@ public class XmlController {
         }
     }
 
+    /**
+     * Persists individual currency entries from the document to the database.
+     * This method used internally by `commitCurrencies`.
+     *
+     * @param entityManager - the EntityManager instance for interacting with the database
+     * @param doc - the document containing the parsed currency data
+     */
     private void persistCurrencies(EntityManager entityManager, Document doc) {
+        LOG.info("Starting persist currencies...");
         // Find currencies from document with tag name and
         // assign to node list
         NodeList nodeList = doc.getElementsByTagName("Currency");
         LOG.debug("Node list created.");
 
         // processes each node in the list one by one
-        for (int itr = 0; itr < nodeList.getLength(); itr++) {
+        for (int nodeIndex = 0; nodeIndex < nodeList.getLength(); nodeIndex++) {
             LOG.debug("Collecting nodes...");
-            Node node = nodeList.item(itr);
+            Node node = nodeList.item(nodeIndex);
 
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 // for getting element by tag names
@@ -231,10 +257,9 @@ public class XmlController {
                 }
 
                 // For information data we need last node of list
-                if (itr == nodeList.getLength() - 1) {
+                if (nodeIndex == nodeList.getLength() - 1) {
                     // Create an instance of the Information and
                     // insert to the database
-                    LOG.debug("Information persist starting...");
                     persistInformation(entityManager, currencyCode, unit, currencyMap);
 
                 } else {
@@ -242,7 +267,7 @@ public class XmlController {
                     // insert to the database
                     persistForex(entityManager, currencyCode, unit, currencyMap);
                     persistBanknote(entityManager, currencyCode, unit, currencyMap);
-                    if (itr != 0) {
+                    if (nodeIndex != 0) {
                         persistCrossRate(entityManager, currencyCode, unit, currencyMap);
                     }
                 }
@@ -250,6 +275,16 @@ public class XmlController {
         }
     }
 
+    /**
+     * Persists a cross rate entry to the database.
+     * Extracts the cross rate value from the provided map based on either "CrossRateUSD" or "CrossRateOther" key.
+     * Creates a new `CrossRates` entity object with the extracted data and persists it using the EntityManager.
+     *
+     * @param entityManager - the EntityManager instance for interacting with the database
+     * @param currencyCode - the currency code for the cross rate
+     * @param unit - the unit value for the cross rate (e.g., 1, 100, etc.)
+     * @param currencyMap - the map containing potential currency data (including cross rates)
+     */
     private void persistCrossRate(EntityManager entityManager, String currencyCode, int unit, Map<String, Double> currencyMap) {
         LOG.debug("Cross Rate persist starting...");
         double crossRate = currencyMap.containsKey("CrossRateUSD") ?
@@ -259,6 +294,17 @@ public class XmlController {
         LOG.info("Cross rate persist finished.");
     }
 
+    /**
+     * Persists a banknote entry to the database.
+     * Extracts buying and selling rates for the banknote from the provided map
+     * using "BanknoteBuying" and "BanknoteSelling" keys with default values (0.0) if not present.
+     * Creates a new `Banknote` entity object with the extracted data and persists it using the EntityManager.
+     *
+     * @param entityManager - the EntityManager instance for interacting with the database
+     * @param currencyCode - the currency code for the banknote
+     * @param unit - the unit value for the banknote (e.g., 1, 100, etc.)
+     * @param currencyMap - the map containing potential currency data (including banknote rates)
+     */
     private void persistBanknote(EntityManager entityManager, String currencyCode, int unit, Map<String, Double> currencyMap) {
         LOG.debug("Banknote persist starting...");
         double buying = currencyMap.getOrDefault("BanknoteBuying", 0.0);
@@ -268,6 +314,17 @@ public class XmlController {
         LOG.info("Banknote persist finished");
     }
 
+    /**
+     * Persists a forex entry to the database.
+     * Extracts buying and selling rates for the forex data from the provided map
+     * using "ForexBuying" and "ForexSelling" keys.
+     * Creates a new `Forex` entity object with the extracted data and persists it using the EntityManager.
+     *
+     * @param entityManager - the EntityManager instance for interacting with the database
+     * @param currencyCode - the currency code for the forex data
+     * @param unit - the unit value for the forex data (e.g., 1, 100, etc.)
+     * @param currencyMap - the map containing potential currency data (including forex rates)
+     */
     private void persistForex(EntityManager entityManager, String currencyCode, int unit, Map<String, Double> currencyMap) {
         // Implement logic to persist Forex entity based on currencyMap values
         LOG.debug("Forex persist starting...");
@@ -276,6 +333,16 @@ public class XmlController {
         LOG.info("Forex persist finished");
     }
 
+    /**
+     * Persists an information entry to the database.
+     * Extracts cross rate (from "CrossRateOther") and forex buying rate (from "ForexBuying") from the provided map.
+     * Creates a new `Information` entity object with the extracted data and persists it using the EntityManager.
+     *
+     * @param entityManager - the EntityManager instance for interacting with the database
+     * @param currencyCode - the currency code for the information entry
+     * @param unit - the unit value for the information data (e.g., 1, 100, etc.)
+     * @param currencyMap - the map containing potential currency data (including cross rate and forex buying)
+     */
     private void persistInformation(EntityManager entityManager, String currencyCode, int unit, Map<String, Double> currencyMap) {
         // Implement logic to persist Information entity based on currencyMap values
         LOG.debug("Information persist starting...");
@@ -284,6 +351,14 @@ public class XmlController {
         LOG.info("Information persist finished");
     }
 
+    /**
+     * Parses the unit value from the provided XML element named "Unit".
+     * Handles potential `NumberFormatException` and logs an error message.
+     * Defaults the unit value to 1 if parsing fails.
+     *
+     * @param element - the XML element containing the unit information
+     * @return the parsed unit value as an integer (defaults to 1)
+     */
     private int parseIntUnit(Element element) {
         int unit = 1;
         try {
@@ -298,7 +373,7 @@ public class XmlController {
      * Generate Map list from element by tag names
      *
      * @param element - An element containing elements by Currency Tag Name
-     * @return cm - Map list key - tag name, value - got by tag name
+     * @return currencyMap - Map list key - tag name, value - got by tag name
      */
     private Map<String, Double> getListByTagNames(Element element) throws CurrencyDataParseException {
         Map<String, Double> currencyMap = new HashMap<>();
@@ -325,9 +400,7 @@ public class XmlController {
      * @return string in Date format yyyyMMdd
      */
     private String getYyyyMMdd() {
-        LOG.trace("getting string in yyyyMMdd format..");
-        SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
-        return f.format(new Date());
+        return new SimpleDateFormat("yyyyMMdd").format(new Date());
     }
 
     /**
@@ -336,8 +409,6 @@ public class XmlController {
      * @return string in Date format HHmmss
      */
     private String getHHmmss() {
-        LOG.trace("getting string in HHmmss format..");
-        SimpleDateFormat f = new SimpleDateFormat("HHmmss");
-        return f.format(new Date());
+        return new SimpleDateFormat("HHmmss").format(new Date());
     }
 }
